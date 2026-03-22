@@ -1,3 +1,4 @@
+import json
 from .mqtt_bridge import MQTTBridge
 from .game_engine import GameEngine, Output
 
@@ -32,4 +33,6 @@ class Server:
         if output.round_score  is not None: payload["round_score"]  = output.round_score
         if output.round        is not None: payload["round"]        = output.round
         if output.score        is not None: payload["score"]        = output.score
-        self._bridge.publish(TOPIC_GAME_STATE, payload)
+        serialised = json.dumps(payload)
+        print(f'Publishing game state: {serialised}')
+        self._bridge.publish(TOPIC_GAME_STATE, serialised)

@@ -32,7 +32,7 @@ class MQTTClient:
 
     def subscribe(self, topic: str, qos: int = 0, callback=None):
         if callback:
-            self.client.message_callback_add(topic, lambda c, u, m: callback(m.topic, m.payload.decode()))
+            self.client.message_callback_add(topic, lambda c, u, m: callback(m.topic, m.payload))
         self.client.subscribe(topic, qos=qos)
 
     def unsubscribe(self, topic: str):

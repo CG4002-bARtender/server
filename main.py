@@ -2,7 +2,7 @@ from src.mqtt_bridge import MQTTBridge
 from src.game_engine import GameEngine
 from src.server import Server
 
-BROKER_HOST = "localhost"
+BROKER_HOST = "172.20.10.2"
 BROKER_PORT = 1883
 
 if __name__ == "__main__":
