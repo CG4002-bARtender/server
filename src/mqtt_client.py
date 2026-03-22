@@ -10,10 +10,10 @@ class MQTTClient:
         self.client.on_disconnect = self._on_disconnect
         self.client.on_message = self._on_message
 
-    def _on_connect(self):
+    def _on_connect(self, _client, _userdata, _connect_flags, _reason_code, _properties):
         print(f"Connected to {self.host}:{self.port}")
 
-    def _on_disconnect(self):
+    def _on_disconnect(self, _client, _userdata, _disconnect_flags, _reason_code, _properties):
         print(f"Disconnected")
 
     def _on_message(self, _client, _userdata, message):

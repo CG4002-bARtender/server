@@ -1,10 +1,9 @@
-import json
 from typing import Callable
 from .mqtt_client import MQTTClient
 
-TOPIC_HALL  = "/hall"
-TOPIC_GLOVE = "/glove"
-TOPIC_ORDER = "/order"
+TOPIC_HALL  = "hall"
+TOPIC_GLOVE = "glove"
+TOPIC_ORDER = "order"
 
 TOPICS = [TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER]
 
@@ -23,14 +22,15 @@ class MQTTBridge:
     def disconnect(self):
         self._client.disconnect()
 
-    def publish(self, topic: str, payload: dict):
-        self._client.publish(topic, json.dumps(payload))
+    def publish(self, topic: str, payload: bytes):
+        self._client.publish(topic, payload)
 
     def _make_handler(self, topic: str):
-        def handler(_topic: str, payload: str):
+        def handler(_topic: str, payload: bytes):
             try:
-                value = int(json.loads(payload)["id"])
-            except (KeyError, ValueError, json.JSONDecodeError) as e:
+                value = int(payload[0])
+                print(f'Received id: {value} from topic: {topic}')
+            except (IndexError, ValueError) as e:
                 print(f"[MQTTBridge] Bad message on {topic}: {e}")
                 return
 

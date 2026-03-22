@@ -1,8 +1,7 @@
 from .mqtt_bridge import MQTTBridge
 from .game_engine import GameEngine, Output
 
-TOPIC_GAME_STATE = "/game"
-
+TOPIC_GAME_STATE = "game"
 
 class Server:
     def __init__(self, bridge: MQTTBridge, engine: GameEngine):
