@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable
+from config import ANIMATION_TIMEOUT, ALL_INGREDIENTS, BOTTLE_POSITIONS
 
 
 class Gesture(Enum):
@@ -34,14 +35,6 @@ class GameState(Enum):
     SHAKE = 4
 
 
-ANIMATION_TIMEOUT = 2.0  # seconds
-
-ALL_INGREDIENTS = [
-    "Gin", "Purple Liqueur", "Scotch", "Bourbon",
-    "Dark Rum", "Vodka", "Midori", "Rye Whiskey", "Whiskey"
-]
-
-BOTTLE_POSITIONS = [0, 1, 3]  # 2 = mixer (fixed), 4 = serve cup (fixed)
 
 RECIPES: dict[Drink, dict] = {
     Drink.AVIATION:     {"ingredients": ["Gin", "Purple Liqueur"], "shake": True},

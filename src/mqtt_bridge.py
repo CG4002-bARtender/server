@@ -3,12 +3,7 @@ import queue
 import threading
 from typing import Callable
 from .mqtt_client import MQTTClient
-
-TOPIC_HALL  = "hall"
-TOPIC_GLOVE = "glove"
-TOPIC_ORDER = "order"
-
-TOPICS = [TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER]
+from config import TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER, TOPICS
 
 OnEventCallback = Callable[[int | None, int | None, int | None], None]
 
