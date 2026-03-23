@@ -34,7 +34,7 @@ class MQTTBridge:
         self._client.publish(topic, payload)
 
     def _process_events(self):
-        while not self._stop.is_set():
+        while True:
             # Priority 1: order (only arrives in IDLE)
             try:
                 order = self._order_queue.get_nowait()

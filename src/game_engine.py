@@ -8,6 +8,7 @@ class GameEngine:
         self.state = GameState.IDLE
         self.current_drink: Drink | None = None
         self.picked_up: int | None = None
+        self.prev_hall: int | None = None
 
         # per-round game logic
         self.round:             int       = 0
@@ -27,11 +28,15 @@ class GameEngine:
         old_state = self.state
         self.state = self._update_state(hall, gesture, drink)
 
+        old_hall = self.prev_hall
+        if hall is not None:
+            self.prev_hall = hall
+
         if self.state == GameState.POUR and old_state != GameState.POUR:
             self._pour_start = time.time()
 
         has_changed_state    = self.state != old_state
-        is_highlight_update  = glove is None and order is None  # hall-only call from HOVER
+        is_highlight_update  = old_hall != hall and self.state == GameState.HOVER
 
         if old_state == GameState.IDLE and self.state == GameState.HOVER:
             self._start_round()
