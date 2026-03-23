@@ -1,67 +1,6 @@
 import random
-from dataclasses import dataclass, field
-from enum import Enum
-from config import ALL_INGREDIENTS, BOTTLE_POSITIONS
-
-
-class Gesture(Enum):
-    GRAB    = 0
-    RELEASE = 1
-    POUR    = 2
-    SHAKE   = 3
-    SERVE   = 4
-
-
-class Drink(Enum):
-    AVIATION     = 0
-    GODFATHER    = 1
-    IRISHCOFFEE  = 2
-    MARTINI      = 3
-    MIDORISOUR   = 4
-    OLDFASHIONED = 5
-    SCOTCHNEAT   = 6
-    TUXEDO       = 7
-    VODKANEAT    = 8
-    WHISKEYNEAT  = 9
-
-
-class GameState(Enum):
-    IDLE  = 0
-    HOVER = 1
-    GRAB  = 2
-    POUR  = 3
-    SHAKE = 4
-
-
-
-RECIPES: dict[Drink, dict] = {
-    Drink.AVIATION:     {"ingredients": ["Gin", "Purple Liqueur"], "shake": True},
-    Drink.GODFATHER:    {"ingredients": ["Scotch", "Bourbon"],     "shake": False},
-    Drink.IRISHCOFFEE:  {"ingredients": ["Bourbon", "Dark Rum"],   "shake": False},
-    Drink.MARTINI:      {"ingredients": ["Gin", "Vodka"],          "shake": True},
-    Drink.MIDORISOUR:   {"ingredients": ["Midori", "Vodka"],       "shake": True},
-    Drink.OLDFASHIONED: {"ingredients": ["Bourbon", "Rye Whiskey"],"shake": False},
-    Drink.SCOTCHNEAT:   {"ingredients": ["Scotch"],                "shake": False},
-    Drink.TUXEDO:       {"ingredients": ["Gin", "Scotch"],         "shake": True},
-    Drink.VODKANEAT:    {"ingredients": ["Vodka"],                 "shake": False},
-    Drink.WHISKEYNEAT:  {"ingredients": ["Whiskey"],               "shake": False},
-}
-
-
-@dataclass
-class Output:
-    state:        int
-    hall_id:      int | None
-    picked_up:    int | None       = field(default=None)  # set while a bottle is held (GRAB/POUR/SHAKE)
-    drink:        int | None       = field(default=None)  # drink enum value, sent on IDLE→HOVER
-    recipe:       dict | None      = field(default=None)  # {"ingredients": [...], "shake": bool}, sent on IDLE→HOVER
-    bottle_map:   dict | None      = field(default=None)  # sent on IDLE→HOVER
-    pour_target:  str | None       = field(default=None)  # "shaker" | "serving_glass"
-    pour_result:  str | None       = field(default=None)  # "correct" | "wrong" for this pour step
-    round_score:  int | None       = field(default=None)  # sent on SERVE
-    round:        int | None       = field(default=None)  # current round number, sent on SERVE
-    score:        int | None       = field(default=None)  # cumulative, sent on SERVE
-
+from .output import Output
+from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, RECIPES
 
 class GameEngine:
     def __init__(self):
@@ -133,7 +72,7 @@ class GameEngine:
                 if gesture == Gesture.GRAB and hall is not None and hall != -1:
                     self.picked_up = hall
                     return GameState.GRAB
-                elif gesture == Gesture.SERVE:
+                elif gesture == Gesture.SERVE and self._can_serve():
                     self._last_round_score = self._finalise_round()
                     self.current_drink = None
                     return GameState.IDLE
@@ -150,7 +89,7 @@ class GameEngine:
                 elif gesture == Gesture.SHAKE:
                     self._validate_shake()
                     return GameState.SHAKE
-                elif gesture == Gesture.SERVE:
+                elif gesture == Gesture.SERVE and self._can_serve():
                     self._last_round_score = self._finalise_round()
                     self.current_drink = None
                     return GameState.IDLE
@@ -201,6 +140,12 @@ class GameEngine:
     def _validate_shake(self):
         if self.needs_shake:
             self.shook = True
+
+    def _can_serve(self) -> bool:
+        if self.needs_shake:
+            return self.poured_final
+        else:
+            return len(self.step_results) >= 1
 
     def _finalise_round(self) -> int:
         poured_all  = len(self.step_results) == len(self.expected_sequence)
