@@ -1,6 +1,7 @@
 import random
+import time
 from .output import Output
-from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, RECIPES
+from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, POUR_TIMEOUT, Gesture, Drink, GameState, RECIPES
 
 class GameEngine:
     def __init__(self):
@@ -17,6 +18,7 @@ class GameEngine:
         self.shook:             bool      = False
         self.poured_final:      bool      = False
         self.step_results:      list[str] = []
+        self._pour_start:       float | None = None
 
     def update(self, hall: int | None, glove: int | None, order: int | None) -> Output | None:
         prev_score = self.score
@@ -24,6 +26,9 @@ class GameEngine:
         drink     = Drink(order)   if order is not None else None
         old_state = self.state
         self.state = self._update_state(hall, gesture, drink)
+
+        if self.state == GameState.POUR and old_state != GameState.POUR:
+            self._pour_start = time.time()
 
         has_changed_state    = self.state != old_state
         is_highlight_update  = glove is None and order is None  # hall-only call from HOVER
@@ -96,9 +101,8 @@ class GameEngine:
                     return GameState.GRAB
 
             case GameState.POUR:
-                if gesture == Gesture.RELEASE:
-                    return GameState.HOVER
-                if gesture == Gesture.GRAB:
+                if self._pour_start is not None and time.time() - self._pour_start >= POUR_TIMEOUT:
+                    self._pour_start = None
                     return GameState.GRAB
 
         return self.state

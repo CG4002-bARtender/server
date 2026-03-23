@@ -10,7 +10,7 @@ OnEventCallback = Callable[[int | None, int | None, int | None], None]
 
 
 class MQTTBridge:
-    def __init__(self, host: str, port: int = 1883):
+    def __init__(self, host: str, port: int):
         self._client = MQTTClient(host, port, client_id="bridge")
         self.on_event: OnEventCallback | None = None
         self._get_state: Callable[[], GameState] | None = None
@@ -54,11 +54,11 @@ class MQTTBridge:
             # Priority 3: gesture  (arrives in all other states)
             try:
                 glove = self._glove_queue.get(timeout=POLL_TIMEOUT)
-                with self._hall_lock:
-                    current_hall = self._hall_value
-                self.on_event(current_hall, glove, None)
             except queue.Empty:
-                pass
+                glove = None
+            with self._hall_lock:
+                current_hall = self._hall_value
+            self.on_event(current_hall, glove, None)
 
     def _make_handler(self, topic: str):
         def handler(_topic, payload):

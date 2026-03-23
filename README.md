@@ -188,7 +188,7 @@ Fired when the player serves the drink.
 - `round_score`: `1` = pass, `0` = fail for this round.
 - `round`: the round number just completed (1-indexed).
 - `score`: cumulative total across all rounds this session.
-- SERVE is accepted at any time from HOVER or GRAB, even if the recipe is incomplete. Missing or incorrect steps will result in `round_score: 0`.
+- For **non-shake drinks**, SERVE is accepted from HOVER or GRAB once at least one ingredient pour has been made. For **shake drinks**, SERVE is accepted only after the full sequence is complete (all ingredients poured → shaken → finishing pour). Serving with missing or incorrect steps results in `round_score: 0`.
 
 ---
 
