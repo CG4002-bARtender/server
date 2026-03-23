@@ -8,6 +8,7 @@ class Server:
         self._bridge = bridge
         self._engine = engine
         self._bridge.on_event = self._on_event
+        self._bridge._get_state = lambda: self._engine.state
         self._engine.on_output = self._publish
 
     def start(self):

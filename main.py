@@ -10,9 +10,3 @@ if __name__ == "__main__":
 
     server.start()
     print(f"Server running. Connected to {BROKER_HOST}:{BROKER_PORT}")
-
-    try:
-        input("Press Enter to stop...\n")
-    finally:
-        server.stop()
-        print("Server stopped.")

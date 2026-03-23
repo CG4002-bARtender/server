@@ -11,11 +11,11 @@ TOPIC_GAME_STATE = "game"
 TOPICS = [TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER]
 
 # Game Engine
-ANIMATION_TIMEOUT = 2.0  # seconds
-
 ALL_INGREDIENTS = [
     "Gin", "Purple Liqueur", "Scotch", "Bourbon",
     "Dark Rum", "Vodka", "Midori", "Rye Whiskey", "Whiskey"
 ]
 
 BOTTLE_POSITIONS = [0, 1, 3]  # 2 = mixer (fixed), 4 = serve cup (fixed)
+
+POLL_TIMEOUT = 0.01  # seconds

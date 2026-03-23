@@ -1,9 +1,8 @@
 import random
-import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable
-from config import ANIMATION_TIMEOUT, ALL_INGREDIENTS, BOTTLE_POSITIONS
+from config import ALL_INGREDIENTS, BOTTLE_POSITIONS
 
 
 class Gesture(Enum):
@@ -71,7 +70,6 @@ class GameEngine:
         self.current_drink: Drink | None = None
         self.hall: int | None = None
         self.picked_up: int | None = None
-        self._timer: threading.Timer | None = None
         self.on_output: Callable[[Output], None] | None = None
 
         # per-round game logic
@@ -171,7 +169,6 @@ class GameEngine:
                     else:
                         self._validate_pour()
                         print(f"[_update_state] GRAB: pour validated, step_results={self.step_results} -> POUR")
-                    self._start_timer()
                     return GameState.POUR
                 elif gesture == Gesture.SHAKE:
                     print(f"[_update_state] GRAB: SHAKE | needs_shake={self.needs_shake} shook={self.shook} picked_up={self.picked_up}")
@@ -192,6 +189,14 @@ class GameEngine:
                     return GameState.GRAB
                 else:
                     print(f"[_update_state] SHAKE: still shaking, gesture={gesture}")
+
+            case GameState.POUR:
+                if gesture == Gesture.RELEASE:
+                    print(f"[_update_state] POUR: RELEASE -> HOVER")
+                    return GameState.HOVER
+                if gesture == Gesture.GRAB:
+                    print(f"[_update_state] POUR: GRAB -> GRAB")
+                    return GameState.GRAB
 
         return self.state
 
@@ -247,16 +252,3 @@ class GameEngine:
         print(f"[_finalise_round] round_score={round_score} cumulative_score={self.score}")
         return round_score
 
-    def _start_timer(self):
-        if self._timer:
-            self._timer.cancel()
-        self._timer = threading.Timer(ANIMATION_TIMEOUT, self._on_anim_timeout)
-        self._timer.daemon = True
-        self._timer.start()
-
-    def _on_anim_timeout(self):
-        print(f"[_on_anim_timeout] animation timeout fired, reverting to GRAB | hall={self.hall} picked_up={self.picked_up}")
-        self._timer = None
-        self.state = GameState.GRAB
-        if self.on_output:
-            self.on_output(Output(state=GameState.GRAB.value, hall_id=self.hall, picked_up=self.picked_up))
