@@ -1,0 +1,5 @@
+certs/*.key
+certs/ca.key
+certs/*.srl
+certs/*.csr
+certs/*.p12
