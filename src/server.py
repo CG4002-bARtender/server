@@ -14,9 +14,6 @@ class Server:
     def start(self):
         self._bridge.connect()
 
-    def stop(self):
-        self._bridge.disconnect()
-
     def _on_event(self, hall: int | None, glove: int | None, order: int | None):
         output = self._engine.update(hall, glove, order)
         if output:

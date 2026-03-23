@@ -22,7 +22,6 @@ class MQTTBridge:
         self._glove_queue: queue.Queue = queue.Queue()  # populated only when state != IDLE
         self._order_queue: queue.Queue = queue.Queue()  # populated only when state == IDLE
 
-        self._stop = threading.Event()
         self._worker = threading.Thread(target=self._process_events, daemon=True)
 
     def connect(self):
@@ -30,11 +29,6 @@ class MQTTBridge:
         self._client.connect()
         for topic in TOPICS:
             self._client.subscribe(topic, callback=self._make_handler(topic))
-
-    def disconnect(self):
-        self._stop.set()
-        self._worker.join()
-        self._client.disconnect()
 
     def publish(self, topic: str, payload: bytes):
         self._client.publish(topic, payload)
@@ -44,8 +38,7 @@ class MQTTBridge:
             # Priority 1: order (only arrives in IDLE)
             try:
                 order = self._order_queue.get_nowait()
-                if self.on_event:
-                    self.on_event(None, None, order)
+                self.on_event(None, None, order)
                 continue
             except queue.Empty:
                 pass
@@ -55,8 +48,7 @@ class MQTTBridge:
                 self._hall_updated.clear()
                 with self._hall_lock:
                     hall = self._hall_value
-                if self.on_event:
-                    self.on_event(hall, None, None)
+                self.on_event(hall, None, None)
                 continue  # re-check hall before consuming any gesture
 
             # Priority 3: gesture  (arrives in all other states)
@@ -64,8 +56,7 @@ class MQTTBridge:
                 glove = self._glove_queue.get(timeout=POLL_TIMEOUT)
                 with self._hall_lock:
                     current_hall = self._hall_value
-                if self.on_event:
-                    self.on_event(current_hall, glove, None)
+                self.on_event(current_hall, glove, None)
             except queue.Empty:
                 pass
 
@@ -82,12 +73,10 @@ class MQTTBridge:
                 if state == GameState.HOVER:
                     self._hall_updated.set()        
 
-            elif topic == TOPIC_GLOVE:
-                if state != GameState.IDLE:
+            elif topic == TOPIC_GLOVE and state != GameState.IDLE:
                     self._glove_queue.put(value)
 
-            elif topic == TOPIC_ORDER:
-                if state == GameState.IDLE:
+            elif topic == TOPIC_ORDER and state == GameState.IDLE:
                     self._order_queue.put(value)
 
         return handler
