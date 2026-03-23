@@ -78,15 +78,11 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "paho-mqtt" },
-]
-
-[package.dev-dependencies]
-dev = [
     { name = "pytest" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "paho-mqtt", specifier = ">=2.0.0" }]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.0.2" }]
+requires-dist = [
+    { name = "paho-mqtt", specifier = ">=2.0.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
+]
