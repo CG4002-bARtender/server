@@ -12,9 +12,15 @@ TOPICS = [TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER]
 
 OnEventCallback = Callable[[int | None, int | None, int | None], None]
 
+
+
 class MQTTBridge:
-    def __init__(self, host: str, port: int = 1883):
-        self._client = MQTTClient(host, port, client_id="bridge")
+    def __init__(self, host: str, port: int = 8883,
+             ca_cert: str = None, client_cert: str = None, client_key: str = None):
+        self._client = MQTTClient(host, port, client_id="bridge",
+                               ca_cert=ca_cert,
+                               client_cert=client_cert,
+                               client_key=client_key)
         self.on_event: OnEventCallback | None = None
         self._queue: queue.Queue = queue.Queue()
         self._worker = threading.Thread(target=self._process_events, daemon=True)
