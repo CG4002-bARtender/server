@@ -3,3 +3,5 @@ certs/ca.key
 certs/*.srl
 certs/*.csr
 certs/*.p12
+
+__pycache__/
