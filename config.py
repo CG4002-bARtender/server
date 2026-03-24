@@ -21,7 +21,6 @@ ALL_INGREDIENTS = [
 BOTTLE_POSITIONS = [0, 1, 3]  # 2 = mixer (fixed), 4 = serve cup (fixed)
 
 POLL_TIMEOUT = 0.01  # seconds
-POUR_TIMEOUT = 1.5   # seconds — auto-return from POUR to GRAB after animation
 
 class Gesture(Enum):
     GRAB    = 0

@@ -62,6 +62,8 @@ class MQTTBridge:
 
     def _make_handler(self, topic: str):
         def handler(_topic, payload):
+            if not payload:
+                return
             value = int(payload[0])
             print(f'Received id: {value} from topic: {topic}')
 

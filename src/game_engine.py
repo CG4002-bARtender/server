@@ -1,7 +1,6 @@
 import random
-import time
 from .output import Output
-from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, POUR_TIMEOUT, Gesture, Drink, GameState, RECIPES
+from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, RECIPES
 
 class GameEngine:
     def __init__(self):
@@ -19,7 +18,6 @@ class GameEngine:
         self.shook:             bool      = False
         self.poured_final:      bool      = False
         self.step_results:      list[str] = []
-        self._pour_start:       float | None = None
 
     def update(self, hall: int | None, glove: int | None, order: int | None) -> Output | None:
         prev_score = self.score
@@ -31,9 +29,6 @@ class GameEngine:
         old_hall = self.prev_hall
         if hall is not None:
             self.prev_hall = hall
-
-        if self.state == GameState.POUR and old_state != GameState.POUR:
-            self._pour_start = time.time()
 
         has_changed_state    = self.state != old_state
         is_highlight_update  = old_hall != hall and self.state == GameState.HOVER
@@ -102,13 +97,20 @@ class GameEngine:
                     return GameState.IDLE
 
             case GameState.SHAKE:
-                if gesture is not None and gesture != Gesture.SHAKE:
-                    return GameState.GRAB
+                if gesture is not None:
+                    if gesture == Gesture.GRAB:
+                        return GameState.GRAB
+                    elif gesture == Gesture.RELEASE:
+                        return GameState.HOVER
+                    else:
+                        return GameState.GRAB
 
             case GameState.POUR:
-                if self._pour_start is not None and time.time() - self._pour_start >= POUR_TIMEOUT:
-                    self._pour_start = None
-                    return GameState.GRAB
+                if gesture is not None:
+                    if gesture == Gesture.GRAB:
+                        return GameState.GRAB
+                    elif gesture == Gesture.RELEASE:
+                        return GameState.HOVER
 
         return self.state
 
