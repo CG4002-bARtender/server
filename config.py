@@ -1,7 +1,7 @@
 from enum import Enum
 
 # MQTT Broker
-BROKER_HOST = "172.20.10.2"
+BROKER_HOST = "localhost"
 BROKER_PORT = 1883
 
 # MQTT Topics
@@ -49,6 +49,8 @@ class GameState(Enum):
     GRAB  = 2
     POUR  = 3
     SHAKE = 4
+    START_SCREEN = 5
+    END_SCREEN   = 6
 
 RECIPES: dict[Drink, dict] = {
     Drink.AVIATION:     {"ingredients": ["Gin", "Purple Liqueur"], "shake": True},

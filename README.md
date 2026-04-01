@@ -14,6 +14,8 @@ Each message always contains `state` and `hall_id`. Additional fields are presen
 | `2` | GRAB — bottle picked up |
 | `3` | POUR — pouring animation playing |
 | `4` | SHAKE — shaking (held until GRAB gesture released) |
+| `5` | START_SCREEN — initial screen before game begins |
+| `6` | END_SCREEN — shown after the final round |
 
 ---
 
@@ -31,6 +33,24 @@ Each message always contains `state` and `hall_id`. Additional fields are presen
 ---
 
 ## Output Messages
+
+### 0. Game started — `START_SCREEN → IDLE`
+
+Fired when the player makes a SERVE gesture on the start screen. The game is now ready to receive drink orders.
+
+```json
+{
+  "state": 0,
+  "hall_id": null,
+  "round_score": 0,
+  "round": 0,
+  "score": 0
+}
+```
+
+- All scoring fields are `0` since no rounds have been played yet.
+
+---
 
 ### 1. New order — `IDLE → HOVER`
 
@@ -171,16 +191,30 @@ Fired when the glove gesture changes from `SHAKE` back to `GRAB`.
 
 ---
 
-### 9. Round ended — `HOVER → IDLE` or `GRAB → IDLE`
+### 9a. Round ended (mid-game) — `HOVER → IDLE` or `GRAB → IDLE`
 
-Fired when the player serves the drink.
+Fired when the player serves the drink during rounds 1–2. Includes scoring for the round, then returns to IDLE for the next order.
 
 ```json
 {
   "state": 0,
   "hall_id": 4,
   "round_score": 1,
-  "round": 2,
+  "round": 1,
+  "score": 1
+}
+```
+
+### 9b. Final round ended — `HOVER → END_SCREEN` or `GRAB → END_SCREEN`
+
+Fired when the player serves the drink on round 3 (the final round). Includes scoring for the round and transitions to the end screen.
+
+```json
+{
+  "state": 6,
+  "hall_id": 4,
+  "round_score": 1,
+  "round": 3,
   "score": 2
 }
 ```
@@ -192,11 +226,24 @@ Fired when the player serves the drink.
 
 ---
 
+### 10. Game restarted — `END_SCREEN → IDLE`
+
+Fired when the player makes a SERVE gesture on the end screen. The game returns to idle, ready for new drink orders.
+
+```json
+{
+  "state": 0,
+  "hall_id": null
+}
+```
+
+---
+
 ## Fields Reference
 
 | Field | Type | Values | When present |
 |-------|------|--------|--------------|
-| `state` | `int` | `0` IDLE, `1` HOVER, `2` GRAB, `3` POUR, `4` SHAKE | Always |
+| `state` | `int` | `0` IDLE, `1` HOVER, `2` GRAB, `3` POUR, `4` SHAKE, `5` START_SCREEN, `6` END_SCREEN | Always |
 | `hall_id` | `int \| null` | `0`, `1`, `2`, `3`, `4` (bar positions) or `null` before first sensor reading | Always |
 | `picked_up` | `int` | `0`, `1`, `2`, `3`, `4` (position of held bottle) | While bottle is held (GRAB, POUR, SHAKE) |
 | `drink` | `int` | `0` Aviation, `1` Godfather, `2` IrishCoffee, `3` Martini, `4` MidoriSour, `5` OldFashioned, `6` ScotchNeat, `7` Tuxedo, `8` VodkaNeat, `9` WhiskeyNeat | IDLE → HOVER only |
@@ -204,6 +251,6 @@ Fired when the player serves the drink.
 | `bottle_map` | `{ string: string }` | Keys: `"0"`, `"1"`, `"3"` (subset); values: ingredient name strings | IDLE → HOVER only |
 | `pour_target` | `string` | `"shaker"` or `"serving_glass"` | GRAB → POUR only |
 | `pour_result` | `string` | `"correct"` or `"wrong"` | GRAB → POUR (ingredient pours only, not finishing pour) |
-| `round_score` | `int` | `1` (pass) or `0` (fail) | SERVE (→ IDLE) only |
-| `round` | `int` | 1-indexed round number | SERVE (→ IDLE) only |
-| `score` | `int` | Cumulative score across all rounds (≥ 0) | SERVE (→ IDLE) only |
+| `round_score` | `int` | `1` (pass) or `0` (fail) | SERVE (→ IDLE or → END_SCREEN) |
+| `round` | `int` | 1-indexed round number | SERVE (→ IDLE or → END_SCREEN) |
+| `score` | `int` | Cumulative score across all rounds (≥ 0) | SERVE (→ IDLE or → END_SCREEN) |

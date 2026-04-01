@@ -4,20 +4,8 @@ from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState,
 
 class GameEngine:
     def __init__(self):
-        self.state = GameState.IDLE
-        self.current_drink: Drink | None = None
-        self.picked_up: int | None = None
-        self.prev_hall: int | None = None
-
-        # per-round game logic
-        self.round:             int       = 0
-        self.score:             int       = 0
-        self.bottle_map:        dict      = {}
-        self.expected_sequence: list[str] = []
-        self.needs_shake:       bool      = False
-        self.shook:             bool      = False
-        self.poured_final:      bool      = False
-        self.step_results:      list[str] = []
+        self.state = GameState.START_SCREEN
+        self._start_game()
 
     def update(self, hall: int | None, glove: int | None, order: int | None) -> Output | None:
         prev_score = self.score
@@ -53,7 +41,7 @@ class GameEngine:
                 if not finishing_pour:
                     output.pour_result = self.step_results[-1]
 
-            if self.state == GameState.IDLE and old_state != GameState.IDLE:
+            if self.state in (GameState.END_SCREEN, GameState.IDLE) and old_state not in (GameState.IDLE, GameState.START_SCREEN):
                 output.round_score = self.score - prev_score
                 output.round       = self.round
                 output.score       = self.score
@@ -64,6 +52,10 @@ class GameEngine:
 
     def _update_state(self, hall: int | None, gesture: Gesture | None, drink: Drink | None) -> GameState:
         match self.state:
+            case GameState.START_SCREEN:
+                if gesture == Gesture.SERVE:
+                    return GameState.IDLE
+
             case GameState.IDLE:
                 if drink is not None:
                     self.current_drink = drink
@@ -76,7 +68,7 @@ class GameEngine:
                 elif gesture == Gesture.SERVE and self._can_serve():
                     self._finalise_round()
                     self.current_drink = None
-                    return GameState.IDLE
+                    return GameState.END_SCREEN if self.round >= 3 else GameState.IDLE
 
             case GameState.GRAB:
                 if gesture == Gesture.RELEASE:
@@ -94,7 +86,7 @@ class GameEngine:
                 elif gesture == Gesture.SERVE and self._can_serve():
                     self._finalise_round()
                     self.current_drink = None
-                    return GameState.IDLE
+                    return GameState.END_SCREEN if self.round >= 3 else GameState.IDLE
 
             case GameState.SHAKE:
                 if gesture is not None:
@@ -111,8 +103,26 @@ class GameEngine:
                         return GameState.GRAB
                     elif gesture == Gesture.RELEASE:
                         return GameState.HOVER
+            
+            case GameState.END_SCREEN:
+                if gesture == Gesture.SERVE:
+                    return GameState.IDLE
 
         return self.state
+
+    def _start_game(self):
+        self.current_drink: Drink | None = None
+        self.picked_up: int | None = None
+        self.prev_hall: int | None = None
+
+        self.round:             int       = 0
+        self.score:             int       = 0
+        self.bottle_map:        dict      = {}
+        self.expected_sequence: list[str] = []
+        self.needs_shake:       bool      = False
+        self.shook:             bool      = False
+        self.poured_final:      bool      = False
+        self.step_results:      list[str] = []
 
     def _start_round(self):
         self.round            += 1
