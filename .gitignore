@@ -4,4 +4,11 @@ certs/*.srl
 certs/*.csr
 certs/*.p12
 
+esp_certs/*.key
+esp_certs/ca.key
+esp_certs/*.srl
+esp_certs/*.csr
+certs/*.p12
+
+
 __pycache__/
