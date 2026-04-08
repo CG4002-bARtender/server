@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//c/Users/SHAIYAN ALAM/Downloads/Capstone-main/Capstone-main/comms/esp32/lib/Setup/src/**)",
-      "Read(//c/Users/SHAIYAN ALAM/Downloads/Capstone-main/Capstone-main/comms/**)",
-      "Read(//c/Users/SHAIYAN ALAM/Downloads/bar/bar/src/comms/**)"
-    ]
-  }
-}
