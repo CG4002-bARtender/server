@@ -12,6 +12,4 @@ esp_certs/*.srl
 esp_certs/*.csr
 certs/*.p12
 
-.env
-
 __pycache__/
