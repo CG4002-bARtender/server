@@ -17,7 +17,6 @@ if __name__ == "__main__":
     print(f"Server running. Connected to {BROKER_HOST}:{BROKER_PORT}")
 
     try:
-        input("Press Enter to stop...\n")
-    finally:
-        server.stop()
-        print("Server stopped.")
+        input("Press Enter to stop the server...\n")
+    except KeyboardInterrupt:       
+        pass
