@@ -3,12 +3,15 @@ certs/ca.key
 certs/*.srl
 certs/*.csr
 certs/*.p12
+certs/*.crt
 
+esp_certs/*.crt
 esp_certs/*.key
 esp_certs/ca.key
 esp_certs/*.srl
 esp_certs/*.csr
 certs/*.p12
 
+.env
 
 __pycache__/
