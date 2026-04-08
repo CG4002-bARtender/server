@@ -9,9 +9,14 @@ from src.game_engine import GameState
 OnEventCallback = Callable[[int | None, int | None, int | None], None]
 
 
+
 class MQTTBridge:
-    def __init__(self, host: str, port: int):
-        self._client = MQTTClient(host, port, client_id="bridge")
+    def __init__(self, host: str, port: int = 8883,
+             ca_cert: str = None, client_cert: str = None, client_key: str = None):
+        self._client = MQTTClient(host, port, client_id="bridge",
+                               ca_cert=ca_cert,
+                               client_cert=client_cert,
+                               client_key=client_key)
         self.on_event: OnEventCallback | None = None
         self._get_state: Callable[[], GameState] | None = None
 
