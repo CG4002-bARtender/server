@@ -1,6 +1,6 @@
 import random
 from .output import Output
-from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, RECIPES
+from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, GameMode, RECIPES
 
 class GameEngine:
     def __init__(self):
@@ -24,11 +24,17 @@ class GameEngine:
         if old_state == GameState.IDLE and self.state == GameState.HOVER:
             self._start_round()
 
+        if old_state == GameState.END_SCREEN and self.state == GameState.START_SCREEN:
+            self._start_game()
+
         if has_changed_state or is_highlight_update:
             output = Output(state=self.state.value, hall_id=hall)
 
             if self.state in (GameState.GRAB, GameState.POUR, GameState.SHAKE):
                 output.picked_up = self.picked_up
+
+            if old_state == GameState.START_SCREEN and self.state == GameState.IDLE:
+                output.mode = self.mode.value
 
             if old_state == GameState.IDLE and self.state == GameState.HOVER:
                 output.drink      = self.current_drink.value
@@ -54,6 +60,13 @@ class GameEngine:
         match self.state:
             case GameState.START_SCREEN:
                 if gesture == Gesture.SERVE:
+                    self.mode = GameMode.NORMAL
+                    return GameState.IDLE
+                elif gesture == Gesture.POUR:
+                    self.mode = GameMode.TUTORIAL
+                    return GameState.IDLE
+                elif gesture == Gesture.SHAKE:
+                    self.mode = GameMode.CHEAT
                     return GameState.IDLE
 
             case GameState.IDLE:
@@ -106,7 +119,7 @@ class GameEngine:
             
             case GameState.END_SCREEN:
                 if gesture == Gesture.SERVE:
-                    return GameState.IDLE
+                    return GameState.START_SCREEN
 
         return self.state
 
@@ -114,6 +127,7 @@ class GameEngine:
         self.current_drink: Drink | None = None
         self.picked_up: int | None = None
         self.prev_hall: int | None = None
+        self.mode: GameMode = GameMode.NORMAL
 
         self.round:             int       = 0
         self.score:             int       = 0
@@ -146,6 +160,9 @@ class GameEngine:
         return bottle_map
 
     def _validate_pour(self):
+        if self.mode == GameMode.CHEAT:
+            self.step_results.append("correct")
+            return
         pos = self.picked_up
         if pos not in self.bottle_map or len(self.step_results) >= len(self.expected_sequence):
             self.step_results.append("wrong")

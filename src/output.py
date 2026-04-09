@@ -4,6 +4,7 @@ from dataclasses import dataclass, field, asdict
 class Output:
     state:        int
     hall_id:      int | None
+    mode:         int | None       = field(default=None)  # 0=normal, 1=tutorial, 2=cheat; sent on START_SCREEN→IDLE
     picked_up:    int | None       = field(default=None)  # set while a bottle is held (GRAB/POUR/SHAKE)
     drink:        int | None       = field(default=None)  # drink enum value, sent on IDLE→HOVER
     recipe:       dict | None      = field(default=None)  # {"ingredients": [...], "shake": bool}, sent on IDLE→HOVER

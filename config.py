@@ -22,6 +22,12 @@ BOTTLE_POSITIONS = [0, 1, 3]  # 2 = mixer (fixed), 4 = serve cup (fixed)
 
 POLL_TIMEOUT = 0.01  # seconds
 
+class GameMode(Enum):
+    NORMAL   = 0
+    TUTORIAL = 1
+    CHEAT    = 2
+
+
 class Gesture(Enum):
     GRAB    = 0
     RELEASE = 1
