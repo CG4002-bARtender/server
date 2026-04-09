@@ -5,7 +5,7 @@ BROKER_HOST    = "localhost"
 BROKER_PORT    = 1883
 TLS_BROKER_PORT = 8883
 CERTS_DIR      = "certs"
-TLS_ENABLED    = False
+TLS_ENABLED    = True
 
 # MQTT Topics
 TOPIC_HALL       = "hall"
