@@ -8,18 +8,22 @@ class GameEngine:
         self._start_game()
 
     def update(self, hall: int | None, glove: int | None, order: int | None) -> Output | None:
+        output = Output(state=self.state.value)
+
+        if self.state == GameState.HOVER and hall is not None:
+            output.hall_id = hall
+            self.picked_up = hall
+            return output
+
         prev_score = self.score
         gesture    = Gesture(glove) if glove is not None else None
         drink     = Drink(order)   if order is not None else None
         old_state = self.state
-        self.state = self._update_state(hall, gesture, drink)
 
-        old_hall = self.prev_hall
-        if hall is not None:
-            self.prev_hall = hall
+        self.state = self._update_state(gesture, drink)
 
-        has_changed_state    = self.state != old_state
-        is_highlight_update  = old_hall != hall and self.state == GameState.HOVER
+        if (self.state == old_state):
+            return None
 
         if old_state == GameState.IDLE and self.state == GameState.HOVER:
             self._start_round()
@@ -27,36 +31,31 @@ class GameEngine:
         if old_state == GameState.END_SCREEN and self.state == GameState.START_SCREEN:
             self._start_game()
 
-        if has_changed_state or is_highlight_update:
-            output = Output(state=self.state.value, hall_id=hall)
+        if self.state in (GameState.GRAB, GameState.POUR, GameState.SHAKE):
+            output.picked_up = self.picked_up
 
-            if self.state in (GameState.GRAB, GameState.POUR, GameState.SHAKE):
-                output.picked_up = self.picked_up
+        if old_state == GameState.START_SCREEN and self.state == GameState.IDLE:
+            output.mode = self.mode.value
 
-            if old_state == GameState.START_SCREEN and self.state == GameState.IDLE:
-                output.mode = self.mode.value
+        if old_state == GameState.IDLE and self.state == GameState.HOVER:
+            output.drink      = self.current_drink.value
+            output.recipe     = RECIPES[self.current_drink]
+            output.bottle_map = self.bottle_map
 
-            if old_state == GameState.IDLE and self.state == GameState.HOVER:
-                output.drink      = self.current_drink.value
-                output.recipe     = RECIPES[self.current_drink]
-                output.bottle_map = self.bottle_map
+        if self.state == GameState.POUR:
+            finishing_pour = self.needs_shake and self.shook and self.picked_up == 2
+            output.pour_target = "serving_glass" if (not self.needs_shake or (self.shook and self.picked_up == 2)) else "shaker"
+            if not finishing_pour:
+                output.pour_result = self.step_results[-1]
 
-            if self.state == GameState.POUR:
-                finishing_pour = self.needs_shake and self.shook and self.picked_up == 2
-                output.pour_target = "serving_glass" if (not self.needs_shake or (self.shook and self.picked_up == 2)) else "shaker"
-                if not finishing_pour:
-                    output.pour_result = self.step_results[-1]
+        if self.state in (GameState.END_SCREEN, GameState.IDLE) and old_state not in (GameState.IDLE, GameState.START_SCREEN):
+            output.round_score = self.score - prev_score
+            output.round       = self.round
+            output.score       = self.score
 
-            if self.state in (GameState.END_SCREEN, GameState.IDLE) and old_state not in (GameState.IDLE, GameState.START_SCREEN):
-                output.round_score = self.score - prev_score
-                output.round       = self.round
-                output.score       = self.score
+        return output
 
-            return output
-
-        return None
-
-    def _update_state(self, hall: int | None, gesture: Gesture | None, drink: Drink | None) -> GameState:
+    def _update_state(self, gesture: Gesture | None, drink: Drink | None) -> GameState:
         match self.state:
             case GameState.START_SCREEN:
                 if gesture == Gesture.SERVE:
@@ -75,8 +74,7 @@ class GameEngine:
                     return GameState.HOVER
 
             case GameState.HOVER:
-                if gesture == Gesture.GRAB and hall is not None and hall != -1:
-                    self.picked_up = hall
+                if gesture == Gesture.GRAB and self.picked_up is not None and self.picked_up != -1:
                     return GameState.GRAB
                 elif gesture == Gesture.SERVE and self._can_serve():
                     self._finalise_round()
@@ -116,7 +114,7 @@ class GameEngine:
                         return GameState.GRAB
                     elif gesture == Gesture.RELEASE:
                         return GameState.HOVER
-            
+
             case GameState.END_SCREEN:
                 if gesture == Gesture.SERVE:
                     return GameState.START_SCREEN

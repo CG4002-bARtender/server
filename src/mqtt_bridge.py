@@ -61,9 +61,7 @@ class MQTTBridge:
                 glove = self._glove_queue.get(timeout=POLL_TIMEOUT)
             except queue.Empty:
                 glove = None
-            with self._hall_lock:
-                current_hall = self._hall_value
-            self.on_event(current_hall, glove, None)
+            self.on_event(None, glove, None)
 
     def _make_handler(self, topic: str):
         def handler(_topic, payload):
@@ -76,9 +74,10 @@ class MQTTBridge:
 
             if topic == TOPIC_HALL:
                 with self._hall_lock:
-                    self._hall_value = value         
-                if state == GameState.HOVER:
-                    self._hall_updated.set()        
+                    changed = value != self._hall_value
+                    self._hall_value = value
+                if state == GameState.HOVER and changed:
+                    self._hall_updated.set()
 
             elif topic == TOPIC_GLOVE and state != GameState.IDLE:
                     self._glove_queue.put(value)
