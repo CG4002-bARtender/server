@@ -17,8 +17,8 @@ class GameEngine:
 
         prev_score = self.score
         gesture    = Gesture(glove) if glove is not None else None
-        drink     = Drink(order)   if order is not None else None
-        old_state = self.state
+        drink      = Drink(order)   if order is not None else None
+        old_state  = self.state
 
         self.state = self._update_state(gesture, drink)
 
