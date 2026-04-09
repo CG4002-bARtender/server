@@ -1,8 +1,11 @@
 from enum import Enum
 
 # MQTT Broker
-BROKER_HOST = "localhost"
-BROKER_PORT = 1883
+BROKER_HOST    = "localhost"
+BROKER_PORT    = 1883
+TLS_BROKER_PORT = 8883
+CERTS_DIR      = "certs"
+TLS_ENABLED    = False
 
 # MQTT Topics
 TOPIC_HALL       = "hall"
