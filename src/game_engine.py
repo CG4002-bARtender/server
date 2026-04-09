@@ -15,8 +15,7 @@ class GameEngine:
             self.picked_up = hall
             return output
 
-        prev_score          = self.score
-        step_results_before = len(self.step_results)
+        prev_score = self.score
         gesture    = Gesture(glove) if glove is not None else None
         drink      = Drink(order)   if order is not None else None
         old_state  = self.state
@@ -44,8 +43,9 @@ class GameEngine:
             output.bottle_map = self.bottle_map
 
         if self.state == GameState.POUR:
-            output.pour_target = "shaker" if "shake" in self.steps else "serving_glass"
-            if len(self.step_results) > step_results_before:
+            finishing_pour = self.needs_shake and self.shook and self.picked_up == 2
+            output.pour_target = "serving_glass" if (not self.needs_shake or (self.shook and self.picked_up == 2)) else "shaker"
+            if not finishing_pour:
                 output.pour_result = self.step_results[-1]
 
         if self.state in (GameState.END_SCREEN, GameState.IDLE) and old_state not in (GameState.IDLE, GameState.START_SCREEN):
@@ -76,7 +76,7 @@ class GameEngine:
             case GameState.HOVER:
                 if gesture == Gesture.GRAB and self.picked_up is not None and self.picked_up != -1:
                     return GameState.GRAB
-                elif gesture == Gesture.SERVE and self.steps[self.step_index] == "serve":
+                elif gesture == Gesture.SERVE and self._can_serve():
                     self._finalise_round()
                     self.current_drink = None
                     return GameState.END_SCREEN if self.round >= 3 else GameState.IDLE
@@ -85,18 +85,16 @@ class GameEngine:
                 if gesture == Gesture.RELEASE:
                     return GameState.HOVER
                 elif gesture == Gesture.POUR:
-                    current_step = self.steps[self.step_index]
-                    if current_step == "pour":
+                    if self.needs_shake and self.shook and self.picked_up == 2:
+                        self.poured_final = True
+                    else:
                         self._validate_pour()
-                        self.step_index += 1
-                    elif current_step == "shake":
-                        self.overpour = True
                     return GameState.POUR
                 elif gesture == Gesture.SHAKE:
-                    if self.steps[self.step_index] == "shake" and self.picked_up == 2:
-                        self.step_index += 1
+                    if self.needs_shake:
+                        self.shook = True
                     return GameState.SHAKE
-                elif gesture == Gesture.SERVE and self.steps[self.step_index] == "serve":
+                elif gesture == Gesture.SERVE and self._can_serve():
                     self._finalise_round()
                     self.current_drink = None
                     return GameState.END_SCREEN if self.round >= 3 else GameState.IDLE
@@ -133,23 +131,20 @@ class GameEngine:
         self.score:             int       = 0
         self.bottle_map:        dict      = {}
         self.expected_sequence: list[str] = []
-        self.steps:             list[str] = []
-        self.step_index:        int       = 0
-        self.overpour:          bool      = False
+        self.needs_shake:       bool      = False
+        self.shook:             bool      = False
+        self.poured_final:      bool      = False
         self.step_results:      list[str] = []
 
     def _start_round(self):
-        self.round             += 1
-        recipe                  = RECIPES[self.current_drink]
-        self.expected_sequence  = recipe["ingredients"]
-        self.step_results       = []
-        self.bottle_map         = self._assign_bottles()
-        self.steps              = ["pour"] * len(recipe["ingredients"])
-        if recipe["shake"]:
-            self.steps.append("shake")
-        self.steps.append("serve")
-        self.step_index         = 0
-        self.overpour           = False
+        self.round            += 1
+        recipe = RECIPES[self.current_drink]
+        self.expected_sequence = recipe["ingredients"]
+        self.needs_shake       = recipe["shake"]
+        self.step_results      = []
+        self.shook             = False
+        self.poured_final      = False
+        self.bottle_map        = self._assign_bottles()
 
     def _assign_bottles(self) -> dict:
         positions = BOTTLE_POSITIONS.copy()
@@ -166,12 +161,23 @@ class GameEngine:
         if self.mode == GameMode.CHEAT:
             self.step_results.append("correct")
             return
-        ingredient = self.bottle_map.get(self.picked_up)
+        pos = self.picked_up
+        if pos not in self.bottle_map or len(self.step_results) >= len(self.expected_sequence):
+            self.step_results.append("wrong")
+            return
+        ingredient = self.bottle_map[pos]
         expected   = self.expected_sequence[len(self.step_results)]
         result     = "correct" if ingredient == expected else "wrong"
         self.step_results.append(result)
 
+    def _can_serve(self) -> bool:
+        if self.needs_shake:
+            return self.poured_final
+        else:
+            return len(self.step_results) >= 1
+
     def _finalise_round(self) -> None:
         poured_all  = len(self.step_results) == len(self.expected_sequence)
         all_correct = all(r == "correct" for r in self.step_results)
-        self.score += 1 if (poured_all and all_correct and not self.overpour) else 0
+        shook_ok    = self.shook if self.needs_shake else True
+        self.score += 1 if (poured_all and all_correct and shook_ok) else 0
