@@ -16,4 +16,4 @@ class Output:
     score:        int | None       = field(default=None)  # cumulative, sent on SERVE
 
     def to_dict(self) -> dict:
-        return {k: v for k, v in asdict(self).items() if v is not None or k == "hall_id"}
+        return {k: v for k, v in asdict(self).items() if v is not None}

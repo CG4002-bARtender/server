@@ -13,6 +13,7 @@ class Server:
 
     def start(self):
         self._bridge.connect()
+        self._publish(Output(state=self._engine.state.value))
 
     def _on_event(self, hall: int | None, glove: int | None, order: int | None):
         output = self._engine.update(hall, glove, order)

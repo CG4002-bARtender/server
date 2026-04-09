@@ -1,7 +1,7 @@
 # Game Engine — Visualizer Integration Reference
 
 The game engine publishes all output to the `/game` MQTT topic as JSON.
-Each message always contains `state` and `hall_id`. Additional fields are present only for specific events.
+Each message always contains `state`. Additional fields are present only for specific events.
 
 ---
 
@@ -36,19 +36,18 @@ Each message always contains `state` and `hall_id`. Additional fields are presen
 
 ### 0. Game started — `START_SCREEN → IDLE`
 
-Fired when the player makes a SERVE gesture on the start screen. The game is now ready to receive drink orders.
+Fired when the player makes a gesture on the start screen to begin the game. The gesture determines the game mode.
+
+- SERVE gesture → NORMAL mode (`mode: 0`)
+- POUR gesture → TUTORIAL mode (`mode: 1`)
+- SHAKE gesture → CHEAT mode (`mode: 2`)
 
 ```json
 {
   "state": 0,
-  "hall_id": null,
-  "round_score": 0,
-  "round": 0,
-  "score": 0
+  "mode": 0
 }
 ```
-
-- All scoring fields are `0` since no rounds have been played yet.
 
 ---
 
@@ -59,7 +58,6 @@ Fired when a drink order comes in. Includes the drink, its recipe, and the bottl
 ```json
 {
   "state": 1,
-  "hall_id": 2,
   "drink": 0,
   "recipe": { "ingredients": ["Gin", "Purple Liqueur"], "shake": true },
   "bottle_map": { "0": "Gin", "1": "Purple Liqueur", "3": "Scotch" }
@@ -90,7 +88,6 @@ Fired when the player's hand moves to a new position while hovering. Used to upd
 ```json
 {
   "state": 2,
-  "hall_id": 1,
   "picked_up": 1
 }
 ```
@@ -107,7 +104,6 @@ For bottle -> shaker (for shake = "true" recipes)
 ```json
 {
   "state": 3,
-  "hall_id": 1,
   "picked_up": 1,
   "pour_target": "shaker",
   "pour_result": "correct"
@@ -118,7 +114,6 @@ For bottle -> serving glass directly (for shake = "false" recipes)
 ```json
 {
   "state": 3,
-  "hall_id": 1,
   "picked_up": 1,
   "pour_target": "serving_glass",
   "pour_result": "correct"
@@ -129,7 +124,6 @@ For bottle -> serving glass directly (for shake = "false" recipes)
 ```json
 {
   "state": 3,
-  "hall_id": 2,
   "picked_up": 2,
   "pour_target": "serving_glass"
 }
@@ -147,7 +141,6 @@ Fired by the animation timer after `POUR`.
 ```json
 {
   "state": 2,
-  "hall_id": 1,
   "picked_up": 1
 }
 ```
@@ -158,8 +151,7 @@ Fired by the animation timer after `POUR`.
 
 ```json
 {
-  "state": 1,
-  "hall_id": 1
+  "state": 1
 }
 ```
 
@@ -170,7 +162,6 @@ Fired by the animation timer after `POUR`.
 ```json
 {
   "state": 4,
-  "hall_id": 2,
   "picked_up": 2
 }
 ```
@@ -184,7 +175,6 @@ Fired when the glove gesture changes from `SHAKE` back to `GRAB`.
 ```json
 {
   "state": 2,
-  "hall_id": 2,
   "picked_up": 2
 }
 ```
@@ -198,7 +188,6 @@ Fired when the player serves the drink during rounds 1–2. Includes scoring for
 ```json
 {
   "state": 0,
-  "hall_id": 4,
   "round_score": 1,
   "round": 1,
   "score": 1
@@ -212,7 +201,6 @@ Fired when the player serves the drink on round 3 (the final round). Includes sc
 ```json
 {
   "state": 6,
-  "hall_id": 4,
   "round_score": 1,
   "round": 3,
   "score": 2
@@ -226,14 +214,13 @@ Fired when the player serves the drink on round 3 (the final round). Includes sc
 
 ---
 
-### 10. Game restarted — `END_SCREEN → IDLE`
+### 10. Game restarted — `END_SCREEN → START_SCREEN`
 
-Fired when the player makes a SERVE gesture on the end screen. The game returns to idle, ready for new drink orders.
+Fired when the player makes a SERVE gesture on the end screen. The game returns to the start screen.
 
 ```json
 {
-  "state": 0,
-  "hall_id": null
+  "state": 5
 }
 ```
 
@@ -244,7 +231,8 @@ Fired when the player makes a SERVE gesture on the end screen. The game returns 
 | Field | Type | Values | When present |
 |-------|------|--------|--------------|
 | `state` | `int` | `0` IDLE, `1` HOVER, `2` GRAB, `3` POUR, `4` SHAKE, `5` START_SCREEN, `6` END_SCREEN | Always |
-| `hall_id` | `int \| null` | `0`, `1`, `2`, `3`, `4` (bar positions) or `null` before first sensor reading | Always |
+| `hall_id` | `int` | `0`–`4` (bar positions) | HOVER sensor updates only (message #2) |
+| `mode` | `int` | `0` NORMAL, `1` TUTORIAL, `2` CHEAT | START_SCREEN → IDLE only |
 | `picked_up` | `int` | `0`, `1`, `2`, `3`, `4` (position of held bottle) | While bottle is held (GRAB, POUR, SHAKE) |
 | `drink` | `int` | `0` Aviation, `1` Godfather, `2` IrishCoffee, `3` Martini, `4` MidoriSour, `5` OldFashioned, `6` ScotchNeat, `7` Tuxedo, `8` VodkaNeat, `9` WhiskeyNeat | IDLE → HOVER only |
 | `recipe` | `{ ingredients: string[], shake: bool }` | `ingredients`: ordered list of ingredient name strings; `shake`: `true` or `false` | IDLE → HOVER only |

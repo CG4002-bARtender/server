@@ -22,6 +22,7 @@ class GameEngine:
         old_state  = self.state
 
         self.state = self._update_state(gesture, drink)
+        output.state = self.state.value
 
         if (self.state == old_state):
             return None
