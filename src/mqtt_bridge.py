@@ -5,6 +5,7 @@ from .mqtt_client import MQTTClient
 from config import TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER, TOPICS, POLL_TIMEOUT
 
 from src.game_engine import GameState
+from config import GameMode
 
 OnEventCallback = Callable[[int | None, int | None, int | None], None]
 
@@ -19,6 +20,7 @@ class MQTTBridge:
                                client_key=client_key)
         self.on_event: OnEventCallback | None = None
         self._get_state: Callable[[], GameState] | None = None
+        self._get_mode: Callable[[], GameMode] | None = None
 
         self._hall_value: int | None = None
         self._hall_lock = threading.Lock()
@@ -76,7 +78,12 @@ class MQTTBridge:
                 with self._hall_lock:
                     changed = value != self._hall_value
                     self._hall_value = value
-                if state == GameState.HOVER and changed:
+                tutorial_idle = (
+                    state == GameState.IDLE
+                    and self._get_mode is not None
+                    and self._get_mode() == GameMode.TUTORIAL
+                )
+                if changed and (state == GameState.HOVER or tutorial_idle):
                     self._hall_updated.set()
 
             elif topic == TOPIC_GLOVE and state != GameState.IDLE:

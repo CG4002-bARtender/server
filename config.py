@@ -61,6 +61,20 @@ class GameState(Enum):
     START_SCREEN = 5
     END_SCREEN   = 6
 
+TUTORIAL_BOTTLE_POS = 0
+
+TUTORIAL_INSTRUCTIONS = [
+    "Move hand to bottle to select it",                    # 0
+    "Grab to pick up bottle",                              # 1
+    "Pour into shaker",                                    # 2
+    "Release the bottle",                                  # 3
+    "Move hand to shaker, and grab to pick up the shaker", # 4
+    "Shake the shaker",                                    # 5
+    "Pour the shaker into glass",                          # 6
+    "Release the shaker",                                  # 7
+    "Thumbs up to serve",                                  # 8
+]
+
 RECIPES: dict[Drink, dict] = {
     Drink.AVIATION:     {"ingredients": ["Gin", "Purple Liqueur"], "shake": True},
     Drink.GODFATHER:    {"ingredients": ["Scotch", "Bourbon"],     "shake": False},
