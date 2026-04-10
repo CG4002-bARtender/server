@@ -4,7 +4,7 @@
 # esp_certs/ — ESP devices (bar, glove) on port 8885
 #              broker cert has CN=bARtender.local, no SAN (mbedTLS checks CN only)
 
-BROKER_IP="172.20.10.2"
+BROKER_IP="172.20.10.13"
 BROKER_HOSTNAME="bARtender.local"
 
 mkdir -p certs esp_certs

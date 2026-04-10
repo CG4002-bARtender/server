@@ -16,7 +16,10 @@ def main():
     
     server.start()
     print(f"Server running. Connected to {BROKER_HOST}:{TLS_BROKER_PORT if TLS_ENABLED else BROKER_PORT}")
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
     try:
         input("Press Enter to stop the server...\n")

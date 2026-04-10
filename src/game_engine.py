@@ -24,7 +24,8 @@ class GameEngine:
 
         prev_score          = self.score
         step_results_before = len(self.step_results)
-        old_state  = self.state
+        overpour_before     = self.overpour
+        old_state           = self.state
 
         self.state = self._update_state(gesture, drink)
         output.state = self.state.value
@@ -53,6 +54,8 @@ class GameEngine:
             output.pour_target = "shaker" if "shake" in self.steps else "serving_glass"
             if len(self.step_results) > step_results_before:
                 output.pour_result = self.step_results[-1]
+            if self.overpour and not overpour_before:
+                output.overpoured = True
 
         if self.state in (GameState.END_SCREEN, GameState.IDLE) and old_state not in (GameState.IDLE, GameState.START_SCREEN):
             output.round_score = self.score - prev_score
@@ -82,7 +85,7 @@ class GameEngine:
             case GameState.HOVER:
                 if gesture == Gesture.GRAB and self.picked_up is not None and self.picked_up != -1:
                     return GameState.GRAB
-                elif gesture == Gesture.SERVE and self.steps[self.step_index] == "serve":
+                elif gesture == Gesture.SERVE and (self.mode == GameMode.CHEAT or self.steps[self.step_index] == "serve"):
                     self._finalise_round()
                     self.current_drink = None
                     return GameState.END_SCREEN if self.round >= 3 else GameState.IDLE
@@ -92,17 +95,17 @@ class GameEngine:
                     return GameState.HOVER
                 elif gesture == Gesture.POUR:
                     current_step = self.steps[self.step_index]
-                    if current_step == "pour":
+                    if self.mode == GameMode.CHEAT or current_step == "pour":
                         self._validate_pour()
                         self.step_index += 1
-                    elif current_step == "shake":
+                    elif current_step in ("shake", "serve"):
                         self.overpour = True
                     return GameState.POUR
                 elif gesture == Gesture.SHAKE:
-                    if self.steps[self.step_index] == "shake" and self.picked_up == 2:
+                    if self.mode == GameMode.CHEAT or (self.steps[self.step_index] == "shake" and self.picked_up == 2):
                         self.step_index += 1
                     return GameState.SHAKE
-                elif gesture == Gesture.SERVE and self.steps[self.step_index] == "serve":
+                elif gesture == Gesture.SERVE and (self.mode == GameMode.CHEAT or self.steps[self.step_index] == "serve"):
                     self._finalise_round()
                     self.current_drink = None
                     return GameState.END_SCREEN if self.round >= 3 else GameState.IDLE
@@ -163,6 +166,10 @@ class GameEngine:
                     return None
 
             if gesture == Gesture.SERVE and step == 7:
+<<<<<<< Updated upstream
+=======
+                self._start_game()
+>>>>>>> Stashed changes
                 self.state = GameState.START_SCREEN
                 return Output(state=GameState.START_SCREEN.value)
 
@@ -205,13 +212,6 @@ class GameEngine:
                     return Output(tutorial_step=6)
                 self.state = GameState.GRAB
                 return None
-            return None
-
-        if self.state == GameState.END_SCREEN:
-            if gesture == Gesture.SERVE:
-                self._start_game()
-                self.state = GameState.START_SCREEN
-                return Output(state=GameState.START_SCREEN.value)
             return None
 
         return None
@@ -276,6 +276,9 @@ class GameEngine:
         self.step_results.append(result)
 
     def _finalise_round(self) -> None:
+        if self.mode == GameMode.CHEAT:
+            self.score += 1
+            return
         poured_all  = len(self.step_results) == len(self.expected_sequence)
         all_correct = all(r == "correct" for r in self.step_results)
         self.score += 1 if (poured_all and all_correct and not self.overpour) else 0

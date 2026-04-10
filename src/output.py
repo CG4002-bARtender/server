@@ -15,6 +15,7 @@ class Output:
     round:         int | None       = field(default=None)  # current round number, sent on SERVE
     score:         int | None       = field(default=None)  # cumulative, sent on SERVE
     tutorial_step: int | None       = field(default=None)  # tutorial step (0–7), tutorial mode only
+    overpoured:    bool | None      = field(default=None)  # True when poured during shake step
 
     def to_dict(self) -> dict:
         return {k: v for k, v in asdict(self).items() if v is not None}
