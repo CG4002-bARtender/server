@@ -2,7 +2,7 @@ import queue
 import threading
 from typing import Callable
 from .mqtt_client import MQTTClient
-from config import TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER, TOPICS, POLL_TIMEOUT
+from config import TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER, TOPIC_ANIM, TOPICS, POLL_TIMEOUT
 
 from src.game_engine import GameState
 from config import GameMode
@@ -29,6 +29,8 @@ class MQTTBridge:
         self._glove_queue: queue.Queue = queue.Queue()  # populated only when state != IDLE
         self._order_queue: queue.Queue = queue.Queue()  # populated only when state == IDLE
 
+        self._anim_event = threading.Event()  # set when "anim" ACK arrives from Unity client
+
         self._worker = threading.Thread(target=self._process_events, daemon=True)
 
     def connect(self):
@@ -36,6 +38,17 @@ class MQTTBridge:
         self._client.connect()
         for topic in TOPICS:
             self._client.subscribe(topic, callback=self._make_handler(topic))
+        self._client.subscribe(TOPIC_ANIM, callback=self._on_anim_ack)
+
+    def clear_anim_ack(self):
+        self._anim_event.clear()
+
+    def wait_for_anim_ack(self):
+        self._anim_event.wait()
+
+    def _on_anim_ack(self, _topic, _payload):
+        print("Received anim ACK")
+        self._anim_event.set()
 
     def publish(self, topic: str, payload: bytes):
         self._client.publish(topic, payload)

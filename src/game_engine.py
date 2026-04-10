@@ -137,7 +137,7 @@ class GameEngine:
                 self.state         = GameState.HOVER
                 self.picked_up     = hall
                 self.tutorial_step = 0
-                return Output(tutorial_step=0)
+                return Output(tutorial_step=0, hall_id=hall)
             return None
 
         if self.state == GameState.HOVER:
@@ -163,8 +163,8 @@ class GameEngine:
                     return None
 
             if gesture == Gesture.SERVE and step == 7:
-                self.state = GameState.END_SCREEN
-                return Output(state=GameState.END_SCREEN.value)
+                self.state = GameState.START_SCREEN
+                return Output(state=GameState.START_SCREEN.value)
 
             return None
 
@@ -199,6 +199,10 @@ class GameEngine:
 
         if self.state == GameState.SHAKE:
             if gesture is not None and gesture != Gesture.SHAKE:
+                if gesture == Gesture.POUR and step == 5:
+                    self.state         = GameState.POUR
+                    self.tutorial_step = 6
+                    return Output(tutorial_step=6)
                 self.state = GameState.GRAB
                 return None
             return None

@@ -12,6 +12,7 @@ TOPIC_HALL       = "hall"
 TOPIC_GLOVE      = "glove"
 TOPIC_ORDER      = "order"
 TOPIC_GAME_STATE = "game"
+TOPIC_ANIM       = "anim"
 
 TOPICS = [TOPIC_HALL, TOPIC_GLOVE, TOPIC_ORDER]
 
@@ -61,7 +62,7 @@ class GameState(Enum):
     START_SCREEN = 5
     END_SCREEN   = 6
 
-TUTORIAL_BOTTLE_POS = 0
+TUTORIAL_BOTTLE_POS = 1
 
 TUTORIAL_INSTRUCTIONS = [
     "Move hand to bottle to select it",                    # 0

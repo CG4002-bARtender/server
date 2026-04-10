@@ -1,6 +1,6 @@
 import json
 from .mqtt_bridge import MQTTBridge
-from .game_engine import GameEngine, Output
+from .game_engine import GameEngine, GameState, Output
 from config import TOPIC_GAME_STATE
 
 class Server:
@@ -19,7 +19,25 @@ class Server:
     def _on_event(self, hall: int | None, glove: int | None, order: int | None):
         output = self._engine.update(hall, glove, order)
         if output:
+            needs_ack = self._needs_anim_ack(output)
+            if needs_ack:
+                self._bridge.clear_anim_ack()
             self._publish(output)
+            if needs_ack:
+                print(f"Waiting for anim ACK (state={output.state})")
+                self._bridge.wait_for_anim_ack()
+
+    def _needs_anim_ack(self, output: Output) -> bool:
+        s = output.state
+        if s == GameState.POUR.value:       # state=3: wait for pour + untilt
+            return True
+        if s == GameState.SHAKE.value:      # state=4: wait for shake + return
+            return True
+        if s == GameState.IDLE.value and output.round is not None:  # state=0, round end
+            return True
+        if s == GameState.END_SCREEN.value: # state=6: wait for game end result
+            return True
+        return False
 
     def _publish(self, output: Output):
         serialised = json.dumps(output.to_dict())
