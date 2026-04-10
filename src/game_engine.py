@@ -1,6 +1,7 @@
 import random
 from .output import Output
-from config import ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, GameMode, RECIPES
+from config import (ALL_INGREDIENTS, BOTTLE_POSITIONS, Gesture, Drink, GameState, GameMode, RECIPES,
+                    TUTORIAL_BOTTLE_POS)
 
 class GameEngine:
     def __init__(self):
@@ -9,6 +10,12 @@ class GameEngine:
 
     def update(self, hall: int | None, glove: int | None, order: int | None) -> Output | None:
         output = Output(state=self.state.value)
+        gesture = Gesture(glove) if glove is not None else None
+        drink   = Drink(order)   if order is not None else None
+
+        # Tutorial mode has its own state machine (START_SCREEN → IDLE handled normally)
+        if self.mode == GameMode.TUTORIAL and self.state not in (GameState.START_SCREEN,):
+            return self._update_tutorial(hall, gesture)
 
         if self.state == GameState.HOVER and hall is not None:
             output.hall_id = hall
@@ -17,8 +24,6 @@ class GameEngine:
 
         prev_score          = self.score
         step_results_before = len(self.step_results)
-        gesture    = Gesture(glove) if glove is not None else None
-        drink      = Drink(order)   if order is not None else None
         old_state  = self.state
 
         self.state = self._update_state(gesture, drink)
@@ -124,6 +129,99 @@ class GameEngine:
 
         return self.state
 
+    def _update_tutorial(self, hall: int | None, gesture: Gesture | None) -> Output | None:
+        step = self.tutorial_step
+
+        if self.state == GameState.IDLE:
+            if hall is not None:
+                self.state         = GameState.HOVER
+                self.picked_up     = hall
+                self.tutorial_step = 0
+                return Output(tutorial_step=0)
+            return None
+
+        if self.state == GameState.HOVER:
+            if hall is not None:
+                old            = self.picked_up
+                self.picked_up = hall
+                if hall != old:
+                    return Output(tutorial_step=step, hall_id=hall)
+                return None
+
+            if gesture == Gesture.GRAB and self.picked_up is not None:
+                if self.picked_up == TUTORIAL_BOTTLE_POS and step in (0, 1):
+                    self.state = GameState.GRAB
+                    if step == 0:
+                        self.tutorial_step = 1
+                        return Output(tutorial_step=1)
+                    return None
+                if self.picked_up == 2 and step in (3, 4, 5, 6):
+                    self.state = GameState.GRAB
+                    if step == 3:
+                        self.tutorial_step = 4
+                        return Output(tutorial_step=4)
+                    return None
+
+            if gesture == Gesture.SERVE and step == 7:
+                self.state = GameState.END_SCREEN
+                return Output(state=GameState.END_SCREEN.value)
+
+            return None
+
+        if self.state == GameState.GRAB:
+            if gesture == Gesture.POUR:
+                if step == 1:
+                    self.state         = GameState.POUR
+                    self.tutorial_step = 2
+                    return Output(tutorial_step=2)
+                if step == 5:
+                    self.state         = GameState.POUR
+                    self.tutorial_step = 6
+                    return Output(tutorial_step=6)
+
+            if gesture == Gesture.SHAKE and step == 4 and self.picked_up == 2:
+                self.state         = GameState.SHAKE
+                self.tutorial_step = 5
+                return Output(tutorial_step=5)
+
+            if gesture == Gesture.RELEASE:
+                return self._tutorial_release(step)
+
+            return None
+
+        if self.state == GameState.POUR:
+            if gesture == Gesture.GRAB:
+                self.state = GameState.GRAB
+                return None
+            if gesture == Gesture.RELEASE:
+                return self._tutorial_release(step)
+            return None
+
+        if self.state == GameState.SHAKE:
+            if gesture is not None and gesture != Gesture.SHAKE:
+                self.state = GameState.GRAB
+                return None
+            return None
+
+        if self.state == GameState.END_SCREEN:
+            if gesture == Gesture.SERVE:
+                self._start_game()
+                self.state = GameState.START_SCREEN
+                return Output(state=GameState.START_SCREEN.value)
+            return None
+
+        return None
+
+    def _tutorial_release(self, step: int) -> Output | None:
+        self.state = GameState.HOVER
+        if step == 2:
+            self.tutorial_step = 3
+            return Output(tutorial_step=3)
+        if step == 6:
+            self.tutorial_step = 7
+            return Output(tutorial_step=7)
+        return None
+
     def _start_game(self):
         self.current_drink: Drink | None = None
         self.picked_up: int | None = None
@@ -132,6 +230,7 @@ class GameEngine:
 
         self.round:             int       = 0
         self.score:             int       = 0
+        self.tutorial_step:     int       = 0
         self.bottle_map:        dict      = {}
         self.expected_sequence: list[str] = []
         self.steps:             list[str] = []

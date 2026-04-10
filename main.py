@@ -13,10 +13,9 @@ def main():
         bridge = MQTTBridge(BROKER_HOST, BROKER_PORT)
     engine = GameEngine()
     server = Server(bridge, engine)
-
-    port = TLS_BROKER_PORT if TLS_ENABLED else BROKER_PORT
+    
     server.start()
-    print(f"Server running. Connected to {BROKER_HOST}:{port}")
+    print(f"Server running. Connected to {BROKER_HOST}:{TLS_BROKER_PORT if TLS_ENABLED else BROKER_PORT}"
 
     try:
         input("Press Enter to stop the server...\n")
