@@ -242,3 +242,43 @@ Fired when the player makes a SERVE gesture on the end screen. The game returns 
 | `round_score` | `int` | `1` (pass) or `0` (fail) | SERVE (→ IDLE or → END_SCREEN) |
 | `round` | `int` | 1-indexed round number | SERVE (→ IDLE or → END_SCREEN) |
 | `score` | `int` | Cumulative score across all rounds (≥ 0) | SERVE (→ IDLE or → END_SCREEN) |
+
+## Tutorial Mode
+Messages sent: 
+Entering Tutorial (START_SCREEN → IDLE)
+Triggered by POUR gesture on start screen. Sent by the normal state machine:
+
+{ "state": 1, "mode": 1 }
+Step 0 — First hall sensor fires (IDLE → HOVER)
+
+{ "tutorial_step": 0 }
+Hovering — bottle changes (any step, hall changes)
+
+{ "tutorial_step": <current_step>, "hall_id": <new_hall_id> }
+Step 1 — GRAB on correct bottle (position 0) at step 0
+
+{ "tutorial_step": 1 }
+Step 2 — POUR gesture while holding correct bottle at step 1
+
+{ "tutorial_step": 2 }
+Step 3 — RELEASE while in POUR state at step 2
+
+{ "tutorial_step": 3 }
+Step 4 — GRAB on shaker (position 2) at step 3
+
+{ "tutorial_step": 4 }
+Step 5 — SHAKE gesture on shaker at step 4
+
+{ "tutorial_step": 5 }
+Step 6 — POUR gesture while holding shaker at step 5
+
+{ "tutorial_step": 6 }
+Step 7 — RELEASE while in POUR state at step 6
+
+{ "tutorial_step": 7 }
+SERVE gesture at step 7 → END_SCREEN
+
+{ "state": <END_SCREEN_value> }
+SERVE on END_SCREEN → START_SCREEN
+
+{ "state": <START_SCREEN_value> }
