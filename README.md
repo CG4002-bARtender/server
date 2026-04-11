@@ -243,42 +243,45 @@ Fired when the player makes a SERVE gesture on the end screen. The game returns 
 | `round` | `int` | 1-indexed round number | SERVE (→ IDLE or → END_SCREEN) |
 | `score` | `int` | Cumulative score across all rounds (≥ 0) | SERVE (→ IDLE or → END_SCREEN) |
 
+
 ## Tutorial Mode
-Messages sent: 
-Entering Tutorial (START_SCREEN → IDLE)
-Triggered by POUR gesture on start screen. Sent by the normal state machine:
-
+Entering Tutorial
+Triggered by POUR gesture on start screen.
 { "state": 1, "mode": 1 }
+→ Labels suppressed, scanning enabled, bottle spawns at qr1, instruction shows: "Move hand to bottle to select it"
+
 Step 0 — First hall sensor fires (IDLE → HOVER)
+{ "tutorial_step": 0, "hall_id": 1 }
+→ Highlights bottle at hall_id. Instruction: "Grab to pick up bottle"
 
-{ "tutorial_step": 0 }
-Hovering — bottle changes (any step, hall changes)
-
-{ "tutorial_step": <current_step>, "hall_id": <new_hall_id> }
-Step 1 — GRAB on correct bottle (position 0) at step 0
-
+Step 1 — GRAB on correct bottle (position 1)
 { "tutorial_step": 1 }
-Step 2 — POUR gesture while holding correct bottle at step 1
+→ Grabs bottle, spawns shaker at qr2. Instruction: "Pour into shaker"
 
+Step 2 — POUR gesture while holding bottle
 { "tutorial_step": 2 }
-Step 3 — RELEASE while in POUR state at step 2
+→ Pour animation into shaker. Instruction: "Release the bottle"
 
-{ "tutorial_step": 3 }
-Step 4 — GRAB on shaker (position 2) at step 3
+Step 3 — RELEASE while pouring
+{ "tutorial_step": 3, "hall_id": 2 }
+→ Releases bottle. Highlights shaker only when hall_id == 2. Instruction: "Move hand to shaker, and grab to pick up"
 
+Step 4 — GRAB on shaker (position 2)
 { "tutorial_step": 4 }
-Step 5 — SHAKE gesture on shaker at step 4
+→ Grabs shaker, spawns empty glass at qr4. Instruction: "Shake the shaker"
 
+Step 5 — SHAKE gesture
 { "tutorial_step": 5 }
-Step 6 — POUR gesture while holding shaker at step 5
+→ Shake animation. Instruction: "Pour the shaker into glass"
 
+Step 6 — POUR gesture while holding shaker
 { "tutorial_step": 6 }
-Step 7 — RELEASE while in POUR state at step 6
+→ Pour animation into glass. Instruction: "Release the shaker"
 
+Step 7 — RELEASE while pouring from shaker
 { "tutorial_step": 7 }
-SERVE gesture at step 7 → END_SCREEN
+→ Releases shaker. Instruction: "Thumbs up to serve"
 
-{ "state": <END_SCREEN_value> }
-SERVE on END_SCREEN → START_SCREEN
-
-{ "state": <START_SCREEN_value> }
+SERVE gesture → START_SCREEN
+{ "state": 5 }
+→ Final drink spawns at qr4, tutorial end text shown for 5s, tutorial ends. Returns to start screen, labels restored.
